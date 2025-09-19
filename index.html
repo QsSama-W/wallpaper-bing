@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>必应壁纸 - HD&4K</title>
+  <link rel="icon" type="image/png" href="https://avatars.githubusercontent.com/u/136866021?v=4">
+  <script src="./static/js/Tailwind_CSS.js"></script>
+  <link href="./static/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/styles.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <!-- 导航栏 -->
+  <header class="sticky top-0 z-50 bg-gray-800/80 backdrop-blur-md border-b border-gray-700">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+        <i class="fa fa-picture-o mr-2"></i>必应壁纸 - HD&4K
+      </h1>
+      <nav>
+        <ul class="flex space-x-6">
+          <li><a href="#" id="home-link" class="text-blue-400 hover:text-blue-300 transition-colors duration-300">首页</a></li>
+          <li><a href="#" id="history-link" class="text-gray-300 hover:text-blue-300 transition-colors duration-300">历史壁纸</a></li>
+          <li><a href="#" id="about-link" class="text-gray-300 hover:text-blue-300 transition-colors duration-300">关于</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="container mx-auto px-4 py-8">
+    <!-- 首页视图 -->
+    <section id="home-view" class="block">
+      <div class="text-center mb-8">
+        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-semibold mb-2">今日必应壁纸</h2>
+        <p class="text-gray-400" id="current-date">加载中...</p>
+      </div>
+      
+      <div class="relative rounded-xl overflow-hidden shadow-2xl bg-gray-800 transition-all duration-500 hover:shadow-blue-500/30 transform hover:-translate-y-1">
+        <div class="aspect-[16/9] bg-gray-700 relative overflow-hidden group">
+          <img id="current-wallpaper" src="" alt="今日必应壁纸" 
+               class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+            <div class="p-6">
+              <p class="text-gray-300">每日更新 · 必应壁纸</p>
+            </div>
+          </div>
+          
+          <!-- 下载按钮组 - 增加间距和区分度 -->
+          <div class="absolute bottom-4 right-4 flex gap-3">
+            <button id="download-btn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:-translate-y-1 opacity-0 group-hover:opacity-100 flex items-center">
+              <i class="fa fa-download mr-2"></i> HD (1920×1080)
+            </button>
+            <button id="download-4k-btn" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:-translate-y-1 opacity-0 group-hover:opacity-100 flex items-center">
+              <i class="fa fa-download mr-2"></i> 4K (3840×2160)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 历史壁纸视图 -->
+    <section id="history-view" class="hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-semibold mb-2">历史必应壁纸</h2>
+        <p class="text-gray-400">查看过去360天的必应壁纸</p>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="history-gallery">
+        <!-- 历史壁纸将通过JavaScript动态加载 -->
+      </div>
+      
+      <!-- 查看更多按钮 -->
+      <div class="mt-12 text-center" id="load-more-container">
+        <button id="load-more-btn" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-8 rounded-lg text-lg font-medium transition-all duration-300 flex items-center justify-center mx-auto">
+          <i class="fa fa-refresh mr-2"></i> 查看更多壁纸
+        </button>
+      </div>
+    </section>
+  </main>
+
+    <!-- 关于视图 -->
+    <section id="about-view" class="hidden">
+      <div class="flex flex-col items-center justify-center min-h-screen">
+        <div class="rounded-full overflow-hidden mb-4">
+          <img src="https://avatars.githubusercontent.com/u/136866021?v=4" alt="网站 logo" class="w-96 h-96 object-cover transition-transform hover:scale-110">
+        </div>
+        <div class="flex space-x-6">
+          <!-- 这里添加友情链接 -->
+          <a href="https://github.com/QsSama-W/wallpaper" class="text-white hover:text-blue-300 transition-colors duration-300">
+            <div class="flex items-center justify-center"><i class="fa fa-github fa-md mr-2"></i><p>项目开源地址</p></div>
+          </a>
+          <!-- <a href="mailto:foambk@foxmail.com" class="text-white hover:text-blue-300 transition-colors duration-300">
+            <div class="flex items-center justify-center"><i class="fa fa-envelope fa-md mr-2"></i><p>我的邮箱</p></div>
+          </a> -->
+          <!-- 可以继续添加更多友情链接 -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-gray-800 border-t border-gray-700 py-6 mt-12">
+    <div class="container mx-auto px-4 text-center text-gray-400">
+     <!--<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=*">
+        <img src="./static/icon/备案国徽图标.png" alt="国徽" class="inline-block h-4 w-4 vertical-align-bottom">
+      *公网安备*号
+    </a>
+     <a> · </a>
+     <a target="_blank" href="https://beian.miit.gov.cn/">*ICP备*号-1</a>
+     <a> · </a>-->
+     <a target="_blank" href="https://www.microsoft.com/zh-cn/bing/bing-wallpaper">壁纸出处</a>
+    </div>
+  </footer>
+
+  <!-- 壁纸查看器模态框 -->
+  <div id="wallpaper-viewer" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center">
+    <button id="close-viewer" class="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 transition-colors">
+      <i class="fa fa-times"></i>
+    </button>
+    <button id="prev-wallpaper" class="absolute left-6 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-gray-300 transition-colors">
+      <i class="fa fa-angle-left"></i>
+    </button>
+    <button id="next-wallpaper" class="absolute right-6 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-gray-300 transition-colors">
+      <i class="fa fa-angle-right"></i>
+    </button>
+    <div class="max-w-6xl w-full mx-4">
+      <img id="fullsize-wallpaper" src="" alt="大图预览" class="max-h-[85vh] mx-auto object-contain transition-all duration-500">
+      <div class="mt-4 text-center">
+        <span id="wallpaper-date" class="text-white text-lg"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="./static/js/script.js"></script>
+  <script>
+    document.getElementById('home-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('home-view').classList.remove('hidden');
+      document.getElementById('history-view').classList.add('hidden');
+      document.getElementById('about-view').classList.add('hidden');
+      document.getElementById('home-link').classList.add('text-blue-400');
+      document.getElementById('home-link').classList.remove('text-gray-300');
+      document.getElementById('history-link').classList.remove('text-blue-400');
+      document.getElementById('history-link').classList.add('text-gray-300');
+      document.getElementById('about-link').classList.remove('text-blue-400');
+      document.getElementById('about-link').classList.add('text-gray-300');
+    });
+
+    document.getElementById('history-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('home-view').classList.add('hidden');
+      document.getElementById('history-view').classList.remove('hidden');
+      document.getElementById('about-view').classList.add('hidden');
+      document.getElementById('home-link').classList.remove('text-blue-400');
+      document.getElementById('home-link').classList.add('text-gray-300');
+      document.getElementById('history-link').classList.add('text-blue-400');
+      document.getElementById('history-link').classList.remove('text-gray-300');
+      document.getElementById('about-link').classList.remove('text-blue-400');
+      document.getElementById('about-link').classList.add('text-gray-300');
+
+      if (document.getElementById('history-gallery').children.length === 0) {
+        loadHistoryWallpapers();
+      }
+    });
+    document.getElementById('about-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('home-view').classList.add('hidden');
+      document.getElementById('history-view').classList.add('hidden');
+      document.getElementById('about-view').classList.remove('hidden');
+      document.getElementById('home-link').classList.remove('text-blue-400');
+      document.getElementById('home-link').classList.add('text-gray-300');
+      document.getElementById('history-link').classList.remove('text-blue-400');
+      document.getElementById('history-link').classList.add('text-gray-300');
+      document.getElementById('about-link').classList.add('text-blue-400');
+      document.getElementById('about-link').classList.remove('text-gray-300');
+    });
+  </script>
+</body>
+</html>    
