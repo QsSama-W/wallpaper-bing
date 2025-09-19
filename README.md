@@ -12,3 +12,9 @@
 
 >仅在宝塔面板部署使用过
 
+## **效果展示**
+**今日壁纸**
+<img src="https://github.com/QsSama-W/wallpaper-bing/blob/main/image_2025-09-19_200243_701.png" style="zoom:50%;" />
+
+**历史壁纸**
+<img src="https://github.com/QsSama-W/wallpaper-bing/blob/main/image_2025-09-19_200247_532.png" style="zoom:50%;" />
