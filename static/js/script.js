@@ -31,7 +31,11 @@ const wallpapersPerPage = 30;
 // 从配置文件加载壁纸URL
 async function loadWallpaperUrls() {
   try {
-    const response = await fetch('/img/wallpaper_urls.json');
+    // 动态获取当前页面的基础路径（兼容本地和 GitHub Pages）
+    const basePath = window.location.pathname.includes('github.io') 
+      ? window.location.pathname.split('/').slice(0, 2).join('/') + '/' 
+      : '';
+    const response = await fetch(`${basePath}img/wallpaper_urls.json`);
     wallpaperUrls = await response.json();
     return true;
   } catch (error) {
