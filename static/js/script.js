@@ -369,7 +369,7 @@ function loadMoreWallpapers() {
         </div>
         <div class="p-4">
           <h3 class="font-medium text-gray-100">${wallpaper.dateChinese}</h3>
-          <p class="text-sm text-gray-400 mt-1">点击查看大图 | <span class="text-blue-400">HD (1920×1080)</span> | <span class="text-purple-400">4K (UHD)</span></p>
+          <p class="text-sm text-gray-400 mt-1">点击图片预览</span></p>
         </div>
       `;
       
