@@ -19,8 +19,8 @@ const todayFormatted = formatDate(today);
 document.getElementById('current-date').textContent = formatDateToChinese(today);
 
 // 计算360天前的日期
-const oneYearAgo = new Date(today);
-oneYearAgo.setFullYear(today.getFullYear() - 1);
+// const oneYearAgo = new Date(today);
+// oneYearAgo.setFullYear(today.getFullYear() - 1);
 
 // 壁纸数据
 let wallpapers = [];
@@ -28,14 +28,10 @@ let wallpaperUrls = {}; // 存储从配置文件获取的URL映射
 let currentPage = 0;
 const wallpapersPerPage = 30;
 
-// 修改 loadWallpaperUrls 函数
+// 从配置文件加载壁纸URL
 async function loadWallpaperUrls() {
   try {
-    // 动态获取当前页面的基础路径（兼容本地和 GitHub Pages）
-    const basePath = window.location.pathname.includes('github.io') 
-      ? window.location.pathname.split('/').slice(0, 2).join('/') + '/' 
-      : '';
-    const response = await fetch(`${basePath}img/wallpaper_urls.json`);
+    const response = await fetch('/img/wallpaper_urls.json');
     wallpaperUrls = await response.json();
     return true;
   } catch (error) {
@@ -52,9 +48,9 @@ function generateWallpapers(startPage = 0) {
     date.setDate(today.getDate() - (startPage * wallpapersPerPage + i + 1));
     
     // 如果日期早于360天前，则停止生成
-    if (date < oneYearAgo) {
-      return result;
-    }
+    // if (date < oneYearAgo) {
+    //   return result;
+    // }
     
     const dateStr = formatDate(date);
     // 只添加有URL的壁纸
@@ -71,9 +67,27 @@ function generateWallpapers(startPage = 0) {
 
 // 检查是否还有更多壁纸可加载
 function hasMoreWallpapers() {
+  // 判断是否早于360天前
+  // const lastDate = new Date(today);
+  // lastDate.setDate(today.getDate() - ((currentPage + 1) * wallpapersPerPage + 1));
+  // return lastDate >= oneYearAgo;
+
+  // 新逻辑：检查下一页是否还有至少一条有效数据
+  const nextPage = currentPage + 1;
+  // 计算下一页最后一个日期
   const lastDate = new Date(today);
-  lastDate.setDate(today.getDate() - ((currentPage + 1) * wallpapersPerPage + 1));
-  return lastDate >= oneYearAgo;
+  lastDate.setDate(today.getDate() - (nextPage * wallpapersPerPage + 1));
+  
+  // 检查下一页的所有日期是否有数据
+  for (let i = 0; i < wallpapersPerPage; i++) {
+    const checkDate = new Date(lastDate);
+    checkDate.setDate(lastDate.getDate() + i);
+    const checkDateStr = formatDate(checkDate);
+    if (wallpaperUrls[checkDateStr]) {
+      return true; // 有数据则可继续加载
+    }
+  }
+  return false; // 无数据则停止
 }
 
 // 初始化壁纸数据
@@ -373,7 +387,7 @@ function loadMoreWallpapers() {
         </div>
         <div class="p-4">
           <h3 class="font-medium text-gray-100">${wallpaper.dateChinese}</h3>
-          <p class="text-sm text-gray-400 mt-1">点击图片预览</span></p>
+          <p class="text-sm text-gray-400 mt-1">点击查看大图 | <span class="text-blue-400">HD (1920×1080)</span> | <span class="text-purple-400">4K (UHD)</span></p>
         </div>
       `;
       
