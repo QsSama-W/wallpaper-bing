@@ -13,6 +13,9 @@
 >仅在宝塔面板部署使用过
 
 ## **效果展示**
+
+**点击[Wallpaper-Bing](https://qssama-w.github.io/wallpaper-bing/)访问演示站**
+
 **今日壁纸**
 <img src="https://github.com/QsSama-W/wallpaper-bing/blob/main/image_2025-09-19_200243_701.png" style="zoom:50%;" />
 
