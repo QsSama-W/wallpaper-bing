@@ -27,6 +27,7 @@ let wallpapers = [];
 let wallpaperUrls = {}; // 存储从配置文件获取的URL映射
 let currentPage = 0;
 const wallpapersPerPage = 30;
+let currentViewerIndex = 0;
 
 // 从配置文件加载壁纸URL
 async function loadWallpaperUrls() {
@@ -80,6 +81,15 @@ async function initializeWallpapers() {
     // 更新今日壁纸
     document.getElementById('current-wallpaper').src = wallpaperUrls[todayFormatted] || 'static/images/default-wallpaper.jpg';
     updateLoadMoreButton();
+    
+    // 添加下载按钮事件
+    document.getElementById('download-btn').addEventListener('click', () => {
+      downloadImage(wallpaperUrls[todayFormatted], `${todayFormatted}.jpg`, false);
+    });
+    
+    document.getElementById('download-4k-btn').addEventListener('click', () => {
+      downloadImage(wallpaperUrls[todayFormatted], `${todayFormatted}.jpg`, true);
+    });
   }
 }
 
@@ -90,105 +100,191 @@ function updateLoadMoreButton() {
     loadMoreBtn.innerHTML = '<i class="fa fa-calendar-check-o mr-2"></i> 已显示全部历史壁纸';
     loadMoreBtn.disabled = true;
     loadMoreBtn.classList.add('bg-gray-600');
-    loadMoreBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+    loadMoreBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'bg-gradient-to-r', 'from-gray-700', 'to-gray-800', 'hover:from-gray-600', 'hover:to-gray-700');
   } else {
     loadMoreBtn.innerHTML = '<i class="fa fa-refresh mr-2"></i> 查看更多壁纸';
     loadMoreBtn.disabled = false;
     loadMoreBtn.classList.remove('bg-gray-600');
-    loadMoreBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+    loadMoreBtn.classList.add('bg-gradient-to-r', 'from-gray-700', 'to-gray-800', 'hover:from-gray-600', 'hover:to-gray-700');
   }
 }
 
-// 导航切换
-document.getElementById('home-link').addEventListener('click', (e) => {
-  e.preventDefault();
-  document.getElementById('home-view').classList.remove('hidden');
-  document.getElementById('history-view').classList.add('hidden');
-  document.getElementById('about-view').classList.add('hidden');
-  document.getElementById('home-link').classList.add('text-blue-400');
-  document.getElementById('home-link').classList.remove('text-gray-300');
-  document.getElementById('history-link').classList.remove('text-blue-400');
-  document.getElementById('history-link').classList.add('text-gray-300');
-  document.getElementById('about-link').classList.remove('text-blue-400');
-  document.getElementById('about-link').classList.add('text-gray-300');
-});
-
-document.getElementById('history-link').addEventListener('click', (e) => {
-  e.preventDefault();
-  document.getElementById('home-view').classList.add('hidden');
-  document.getElementById('history-view').classList.remove('hidden');
-  document.getElementById('about-view').classList.add('hidden');
-  document.getElementById('home-link').classList.remove('text-blue-400');
-  document.getElementById('home-link').classList.add('text-gray-300');
-  document.getElementById('history-link').classList.add('text-blue-400');
-  document.getElementById('history-link').classList.remove('text-gray-300');
-  document.getElementById('about-link').classList.remove('text-blue-400');
-  document.getElementById('about-link').classList.add('text-gray-300');
+// 加载更多壁纸 - 优化版
+function loadMoreWallpapers() {
+  currentPage++;
+  const loadMoreBtn = document.getElementById('load-more-btn');
   
-  // 如果历史壁纸还没加载，则加载它们
-  if (document.getElementById('history-gallery').children.length === 0) {
-    loadHistoryWallpapers();
-  }
-});
+  // 禁用按钮并显示加载状态
+  loadMoreBtn.disabled = true;
+  loadMoreBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 加载中...';
+  loadMoreBtn.classList.add('bg-gray-600');
+  loadMoreBtn.classList.remove('bg-gradient-to-r', 'from-gray-700', 'to-gray-800', 'hover:from-gray-600', 'hover:to-gray-700');
+  
+  // 先创建占位框
+  createLoadingPlaceholders();
+  
+  // 模拟加载延迟，然后逐个加载真实壁纸
+  setTimeout(() => {
+    const moreWallpapers = generateWallpapers(currentPage);
+    if (moreWallpapers.length > 0) {
+      wallpapers = [...wallpapers, ...moreWallpapers];
+      loadHistoryWallpapersProgressive(moreWallpapers); // 渐进式加载
+    }
+    updateLoadMoreButton();
+  }, 500);
+}
 
-document.getElementById('about-link').addEventListener('click', (e) => {
-  e.preventDefault();
-  document.getElementById('home-view').classList.add('hidden');
-  document.getElementById('history-view').classList.add('hidden');
-  document.getElementById('about-view').classList.remove('hidden');
-  document.getElementById('home-link').classList.remove('text-blue-400');
-  document.getElementById('home-link').classList.add('text-gray-300');
-  document.getElementById('history-link').classList.remove('text-blue-400');
-  document.getElementById('history-link').classList.add('text-gray-300');
-  document.getElementById('about-link').classList.add('text-blue-400');
-  document.getElementById('about-link').classList.remove('text-gray-300');
-});
-
-// 加载历史壁纸
-function loadHistoryWallpapers() {
+// 创建加载占位框
+function createLoadingPlaceholders() {
   const gallery = document.getElementById('history-gallery');
+  
+  // 创建最多30个占位框（但不超过实际可能的数量）
+  const maxPlaceholders = Math.min(wallpapersPerPage, getRemainingWallpapersCount());
+  
+  for (let i = 0; i < maxPlaceholders; i++) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'bg-gray-800/60 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg opacity-0 card-hover';
+    placeholder.style.animation = `slideIn 0.6s ease-out forwards ${i * 0.05}s`;
+    placeholder.innerHTML = `
+      <div class="aspect-[4/3] overflow-hidden relative">
+        <div class="w-full h-full loading-skeleton rounded"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <i class="fa fa-spinner fa-spin text-gray-400 text-2xl"></i>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="w-3/4 h-4 loading-skeleton rounded mb-2"></div>
+        <div class="w-1/2 h-3 loading-skeleton rounded"></div>
+      </div>
+    `;
+    gallery.appendChild(placeholder);
+  }
+}
+
+// 渐进式加载历史壁纸
+function loadHistoryWallpapersProgressive(newWallpapers) {
+  const gallery = document.getElementById('history-gallery');
+  const placeholders = Array.from(gallery.children).slice(-newWallpapers.length);
+  
+  newWallpapers.forEach((wallpaper, index) => {
+    // 延迟加载每个壁纸，创建逐个出现的效果
+    setTimeout(() => {
+      if (placeholders[index]) {
+        const wallpaperCard = createWallpaperCard(wallpaper, index);
+        // 替换占位框
+        gallery.replaceChild(wallpaperCard, placeholders[index]);
+      }
+    }, index * 150); // 每个壁纸间隔150ms加载
+  });
+  
+  // 为所有历史壁纸下载按钮添加事件监听
+  setTimeout(() => {
+    setupHistoryDownloadButtons();
+  }, newWallpapers.length * 150);
+}
+
+// 创建壁纸卡片
+function createWallpaperCard(wallpaper, index) {
+  const wallpaperCard = document.createElement('div');
+  wallpaperCard.className = 'bg-gray-800/60 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 opacity-0 card-hover';
+  wallpaperCard.style.animation = `slideIn 0.6s ease-out forwards`;
+  wallpaperCard.innerHTML = `
+    <div class="aspect-[4/3] overflow-hidden relative group">
+      <img src="${wallpaper.url}" alt="${wallpaper.dateChinese}壁纸" 
+           class="w-full h-full object-cover transition-transform duration-7000 ease-in-out hover:scale-110 image-loading"
+           onload="this.classList.remove('image-loading')">
+      <!-- 历史壁纸下载按钮组 -->
+      <div class="absolute bottom-4 right-4 flex gap-3">
+        <button class="download-hd bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 text-sm flex items-center btn-pop" 
+                data-date="${wallpaper.date}">
+          <i class="fa fa-download mr-1.5"></i> HD
+        </button>
+        <button class="download-4k bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 text-sm flex items-center btn-pop" 
+                data-date="${wallpaper.date}">
+          <i class="fa fa-download mr-1.5"></i> 4K
+        </button>
+      </div>
+    </div>
+    <div class="p-4">
+      <h3 class="font-medium text-gray-100">${wallpaper.dateChinese}</h3>
+      <p class="text-sm text-gray-400 mt-1">点击图片预览</p>
+    </div>
+  `;
+  
+  wallpaperCard.addEventListener('click', (e) => {
+    // 只有点击图片区域才打开查看器
+    if (!e.target.closest('button')) {
+      openWallpaperViewer(wallpapers.findIndex(w => w.date === wallpaper.date));
+    }
+  });
+  
+  return wallpaperCard;
+}
+
+// 获取剩余可加载的壁纸数量
+function getRemainingWallpapersCount() {
+  const lastPossibleDate = new Date(today);
+  lastPossibleDate.setDate(today.getDate() - ((currentPage + 1) * wallpapersPerPage + 1));
+  
+  if (lastPossibleDate < oneYearAgo) {
+    const daysDifference = Math.ceil((today - oneYearAgo) / (1000 * 60 * 60 * 24));
+    return Math.max(0, daysDifference - currentPage * wallpapersPerPage);
+  }
+  
+  return wallpapersPerPage;
+}
+
+// 初始化历史壁纸加载
+function loadHistoryWallpapers(append = false) {
+  const gallery = document.getElementById('history-gallery');
+  
+  // 如果不是加载更多，清空画廊
+  if (!append) {
+    gallery.innerHTML = '';
+  }
   
   // 过滤掉今天的壁纸
   const historyWallpapers = wallpapers.filter(wallpaper => wallpaper.date !== todayFormatted);
   
+  // 渐进式加载
   historyWallpapers.forEach((wallpaper, index) => {
-    const wallpaperCard = document.createElement('div');
-    wallpaperCard.className = 'bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 opacity-0 relative';
-    wallpaperCard.style.animation = `slideIn 0.5s ease-out forwards ${index * 0.05}s`;
-    wallpaperCard.innerHTML = `
-      <div class="aspect-[4/3] overflow-hidden relative group">
-        <img src="${wallpaper.url}" alt="${wallpaper.dateChinese}壁纸" 
-             class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
-        <!-- 历史壁纸下载按钮组 - 增加间距和标签 -->
-        <div class="absolute bottom-4 right-4 flex gap-3">
-          <button class="download-hd bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 text-sm flex items-center" 
-                  data-date="${wallpaper.date}">
-            <i class="fa fa-download mr-1.5"></i> HD
-          </button>
-          <button class="download-4k bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 text-sm flex items-center" 
-                  data-date="${wallpaper.date}">
-            <i class="fa fa-download mr-1.5"></i> 4K
-          </button>
-        </div>
-      </div>
-      <div class="p-4">
-        <h3 class="font-medium text-gray-100">${wallpaper.dateChinese}</h3>
-        <p class="text-sm text-gray-400 mt-1">点击图片预览</p>
-      </div>
-    `;
-    
-    wallpaperCard.addEventListener('click', (e) => {
-      // 只有点击图片区域才打开查看器
-      if (!e.target.closest('button')) {
-        openWallpaperViewer(wallpapers.findIndex(w => w.date === wallpaper.date));
-      }
-    });
-    
-    gallery.appendChild(wallpaperCard);
+    setTimeout(() => {
+      const wallpaperCard = createWallpaperCard(wallpaper, index);
+      gallery.appendChild(wallpaperCard);
+    }, index * 100); // 初始加载时每个卡片间隔100ms
   });
   
   // 为所有历史壁纸下载按钮添加事件监听
-  setupHistoryDownloadButtons();
+  setTimeout(() => {
+    setupHistoryDownloadButtons();
+  }, historyWallpapers.length * 100);
+}
+
+// 设置历史壁纸下载按钮事件
+function setupHistoryDownloadButtons() {
+  // HD下载按钮
+  document.querySelectorAll('.download-hd').forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const date = button.getAttribute('data-date');
+      const wallpaper = wallpapers.find(w => w.date === date);
+      if (wallpaper) {
+        downloadImage(wallpaper.url, `${date}.jpg`, false);
+      }
+    });
+  });
+  
+  // 4K下载按钮
+  document.querySelectorAll('.download-4k').forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const date = button.getAttribute('data-date');
+      const wallpaper = wallpapers.find(w => w.date === date);
+      if (wallpaper) {
+        downloadImage(wallpaper.url, `${date}.jpg`, true);
+      }
+    });
+  });
 }
 
 // 通用下载函数 - 支持4K和普通下载
@@ -269,15 +365,21 @@ function showDownloadNotification(message, isSuccess = false) {
     // 创建通知元素
     notification = document.createElement('div');
     notification.id = 'download-notification';
-    notification.className = 'fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-y-20 opacity-0';
+    notification.className = 'fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-50 transform transition-all duration-300 translate-y-20 opacity-0';
     document.body.appendChild(notification);
   }
   
-  // 设置通知内容和样式
+  // 设置通知样式和内容
   notification.textContent = message;
-  notification.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 transform ${
-    isSuccess ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-  }`;
+  notification.className = 'fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-xl z-50 transform transition-all duration-300';
+  
+  if (isSuccess) {
+    notification.classList.add('bg-green-600', 'text-white');
+  } else if (isSuccess === false) {
+    notification.classList.add('bg-red-600', 'text-white');
+  } else {
+    notification.classList.add('bg-blue-600', 'text-white');
+  }
   
   // 显示通知
   setTimeout(() => {
@@ -288,240 +390,103 @@ function showDownloadNotification(message, isSuccess = false) {
   setTimeout(() => {
     notification.classList.remove('translate-y-0', 'opacity-100');
     notification.classList.add('translate-y-20', 'opacity-0');
+    
+    // 完全隐藏后移除元素
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
   }, 3000);
 }
 
-// 设置历史壁纸下载按钮
-function setupHistoryDownloadButtons() {
-  // 高清下载按钮
-  document.querySelectorAll('#history-gallery button.download-hd').forEach(button => {
-    button.removeEventListener('click', handleHistoryHDDownload);
-    button.addEventListener('click', handleHistoryHDDownload);
-  });
-  
-  // 4K下载按钮
-  document.querySelectorAll('#history-gallery button.download-4k').forEach(button => {
-    button.removeEventListener('click', handleHistory4KDownload);
-    button.addEventListener('click', handleHistory4KDownload);
-  });
-}
-
-// 历史壁纸高清下载处理函数
-function handleHistoryHDDownload(e) {
-  e.stopPropagation(); // 防止触发图片点击事件
-  e.preventDefault(); // 阻止按钮默认行为
-  
-  const date = this.getAttribute('data-date');
-  const wallpaper = wallpapers.find(w => w.date === date);
-  
-  if (wallpaper) {
-    const filename = `wallpaper_${date}.jpg`;
-    downloadImage(wallpaper.url, filename, false);
-  }
-}
-
-// 历史壁纸4K下载处理函数
-function handleHistory4KDownload(e) {
-  e.stopPropagation(); // 防止触发图片点击事件
-  e.preventDefault(); // 阻止按钮默认行为
-  
-  const date = this.getAttribute('data-date');
-  const wallpaper = wallpapers.find(w => w.date === date);
-  
-  if (wallpaper) {
-    const filename = `wallpaper_${date}.jpg`;
-    downloadImage(wallpaper.url, filename, true);
-  }
-}
-
-// 加载更多历史壁纸
-function loadMoreWallpapers() {
-  const button = document.getElementById('load-more-btn');
-  button.innerHTML = '<i class="fa fa-circle-o-notch fa-spin mr-2"></i> 加载中...';
-  button.disabled = true;
-  
-  setTimeout(() => {
-    currentPage++;
-    const newWallpapers = generateWallpapers(currentPage);
-    wallpapers = [...wallpapers, ...newWallpapers];
-    
-    const gallery = document.getElementById('history-gallery');
-    
-    newWallpapers.forEach((wallpaper, index) => {
-      const wallpaperCard = document.createElement('div');
-      wallpaperCard.className = 'bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 opacity-0 relative';
-      wallpaperCard.style.animation = `slideIn 0.5s ease-out forwards ${index * 0.05}s`;
-      wallpaperCard.innerHTML = `
-        <div class="aspect-[4/3] overflow-hidden relative group">
-          <img src="${wallpaper.url}" alt="${wallpaper.dateChinese}壁纸" 
-               class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
-          <!-- 历史壁纸下载按钮组 - 增加间距和标签 -->
-          <div class="absolute bottom-4 right-4 flex gap-3">
-            <button class="download-hd bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 text-sm flex items-center" 
-                    data-date="${wallpaper.date}">
-              <i class="fa fa-download mr-1.5"></i> HD
-            </button>
-            <button class="download-4k bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 text-sm flex items-center" 
-                    data-date="${wallpaper.date}">
-              <i class="fa fa-download mr-1.5"></i> 4K
-            </button>
-          </div>
-        </div>
-        <div class="p-4">
-          <h3 class="font-medium text-gray-100">${wallpaper.dateChinese}</h3>
-          <p class="text-sm text-gray-400 mt-1">点击图片预览</span></p>
-        </div>
-      `;
-      
-      wallpaperCard.addEventListener('click', (e) => {
-        // 只有点击图片区域才打开查看器
-        if (!e.target.closest('button')) {
-          openWallpaperViewer(wallpapers.findIndex(w => w.date === wallpaper.date));
-        }
-      });
-      
-      gallery.appendChild(wallpaperCard);
-    });
-    
-    // 为新加载的下载按钮添加事件监听
-    setupHistoryDownloadButtons();
-    
-    // 更新按钮状态
-    updateLoadMoreButton();
-  }, 800);
-}
-
 // 壁纸查看器功能
-let currentViewingIndex = 0;
-
-// 打开壁纸查看器
-document.getElementById('current-wallpaper').addEventListener('click', () => {
-  // 查找今天壁纸在数组中的索引
-  const todayIndex = wallpapers.findIndex(w => w.date === todayFormatted);
-  if (todayIndex !== -1) {
-    openWallpaperViewer(todayIndex);
-  }
-});
-
 function openWallpaperViewer(index) {
-  currentViewingIndex = index;
   const viewer = document.getElementById('wallpaper-viewer');
-  const fullsizeImg = document.getElementById('fullsize-wallpaper');
-  const dateDisplay = document.getElementById('wallpaper-date');
+  const img = document.getElementById('fullsize-wallpaper');
+  const dateEl = document.getElementById('wallpaper-date');
   
-  fullsizeImg.src = wallpapers[index].url;
-  fullsizeImg.alt = `${wallpapers[index].dateChinese}壁纸`;
-  dateDisplay.textContent = wallpapers[index].dateChinese;
+  currentViewerIndex = index;
+  const wallpaper = wallpapers[index];
   
+  img.src = wallpaper.url;
+  dateEl.textContent = wallpaper.dateChinese;
+  
+  // 显示模态框并添加动画
   viewer.classList.remove('hidden');
   viewer.classList.add('fade-in');
   
-  // 防止背景滚动
-  document.body.style.overflow = 'hidden';
+  // 图片加载完成后添加缩放动画
+  img.onload = () => {
+    img.classList.add('scale-in');
+  };
   
-  // 图片加载动画
-  fullsizeImg.classList.add('scale-in');
-  setTimeout(() => {
-    fullsizeImg.classList.remove('scale-in');
-  }, 300);
+  // 阻止背景滚动
+  document.body.style.overflow = 'hidden';
 }
 
-// 关闭壁纸查看器
-document.getElementById('close-viewer').addEventListener('click', () => {
+function closeWallpaperViewer() {
   const viewer = document.getElementById('wallpaper-viewer');
-  viewer.classList.add('fade-out');
+  const img = document.getElementById('fullsize-wallpaper');
   
+  // 淡出动画
+  viewer.classList.add('opacity-0');
   setTimeout(() => {
     viewer.classList.add('hidden');
-    viewer.classList.remove('fade-out');
-    // 恢复背景滚动
+    viewer.classList.remove('opacity-0', 'fade-in');
+    img.classList.remove('scale-in');
     document.body.style.overflow = '';
   }, 300);
-});
-
-// 上一张壁纸
-document.getElementById('prev-wallpaper').addEventListener('click', () => {
-  currentViewingIndex = (currentViewingIndex - 1 + wallpapers.length) % wallpapers.length;
-  updateViewerImage();
-});
-
-// 下一张壁纸
-document.getElementById('next-wallpaper').addEventListener('click', () => {
-  currentViewingIndex = (currentViewingIndex + 1) % wallpapers.length;
-  updateViewerImage();
-});
-
-// 更新查看器中的图片
-function updateViewerImage() {
-  const fullsizeImg = document.getElementById('fullsize-wallpaper');
-  const dateDisplay = document.getElementById('wallpaper-date');
-  
-  // 添加过渡效果
-  fullsizeImg.style.opacity = '0';
-  
-  setTimeout(() => {
-    fullsizeImg.src = wallpapers[currentViewingIndex].url;
-    fullsizeImg.alt = `${wallpapers[currentViewingIndex].dateChinese}壁纸`;
-    dateDisplay.textContent = wallpapers[currentViewingIndex].dateChinese;
-    fullsizeImg.style.opacity = '1';
-  }, 200);
 }
+
+function prevWallpaper() {
+  if (currentViewerIndex > 0) {
+    const img = document.getElementById('fullsize-wallpaper');
+    img.classList.remove('scale-in');
+    setTimeout(() => {
+      openWallpaperViewer(currentViewerIndex - 1);
+    }, 200);
+  }
+}
+
+function nextWallpaper() {
+  if (currentViewerIndex < wallpapers.length - 1) {
+    const img = document.getElementById('fullsize-wallpaper');
+    img.classList.remove('scale-in');
+    setTimeout(() => {
+      openWallpaperViewer(currentViewerIndex + 1);
+    }, 200);
+  }
+}
+
+// 绑定查看器事件
+document.getElementById('close-viewer').addEventListener('click', closeWallpaperViewer);
+document.getElementById('prev-wallpaper').addEventListener('click', prevWallpaper);
+document.getElementById('next-wallpaper').addEventListener('click', nextWallpaper);
+
+// 点击查看器背景关闭
+document.getElementById('wallpaper-viewer').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('wallpaper-viewer')) {
+    closeWallpaperViewer();
+  }
+});
 
 // 键盘导航
 document.addEventListener('keydown', (e) => {
   const viewer = document.getElementById('wallpaper-viewer');
-  if (viewer.classList.contains('hidden')) return;
-  
-  if (e.key === 'Escape') {
-    document.getElementById('close-viewer').click();
-  } else if (e.key === 'ArrowLeft') {
-    document.getElementById('prev-wallpaper').click();
-  } else if (e.key === 'ArrowRight') {
-    document.getElementById('next-wallpaper').click();
+  if (!viewer.classList.contains('hidden')) {
+    if (e.key === 'Escape') {
+      closeWallpaperViewer();
+    } else if (e.key === 'ArrowLeft') {
+      prevWallpaper();
+    } else if (e.key === 'ArrowRight') {
+      nextWallpaper();
+    }
   }
 });
 
-// 点击背景关闭查看器
-document.getElementById('wallpaper-viewer').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('wallpaper-viewer')) {
-    document.getElementById('close-viewer').click();
-  }
-});
-
-// 页面加载动画
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.add('fade-in');
-  initializeWallpapers();
-});
-
-// 确保当前壁纸图片加载完成后才添加点击事件
-document.getElementById('current-wallpaper').addEventListener('load', function() {
-  this.style.cursor = 'pointer';
-});
-
-if (document.getElementById('current-wallpaper').complete) {
-  document.getElementById('current-wallpaper').style.cursor = 'pointer';
-}
-
-// 今日壁纸下载功能区 - 优化按钮样式
-document.getElementById('download-btn').addEventListener('click', function(e) {
-  e.preventDefault(); // 阻止按钮默认行为
-  
-  if (wallpaperUrls[todayFormatted]) {
-    const filename = `wallpaper_${todayFormatted}.jpg`;
-    downloadImage(wallpaperUrls[todayFormatted], filename, false);
-  }
-});
-
-// 4K下载按钮事件监听
-document.getElementById('download-4k-btn').addEventListener('click', function(e) {
-  e.preventDefault(); // 阻止按钮默认行为
-  
-  if (wallpaperUrls[todayFormatted]) {
-    const filename = `wallpaper_${todayFormatted}.jpg`;
-    downloadImage(wallpaperUrls[todayFormatted], filename, true);
-  }
-});
-
-// 加载更多按钮事件
+// 初始化加载更多按钮事件
 document.getElementById('load-more-btn').addEventListener('click', loadMoreWallpapers);
+
+// 页面加载完成后初始化
+window.addEventListener('load', initializeWallpapers);
