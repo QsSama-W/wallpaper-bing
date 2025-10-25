@@ -8,6 +8,18 @@
   .text-shadow {
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-5px);
+  }
+  .btn-pop {
+    transition: transform 0.2s ease;
+  }
+  .btn-pop:active {
+    transform: scale(0.95);
+  }
 }
 
 /* 动画效果 */
@@ -21,21 +33,48 @@
 }
 
 .slide-in {
-  animation: slideIn 0.4s ease-out;
+  animation: slideIn 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @keyframes slideIn {
-  from { transform: translateY(20px); opacity: 0; }
+  from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 .scale-in {
-  animation: scaleIn 0.3s ease-out;
+  animation: scaleIn 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @keyframes scaleIn {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* 渐变动画 */
+.bg-gradient-animated {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 加载动画 */
+.loader-pulse {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
 }
 
 /* 隐藏页面滚动条但保持滚动功能 */
@@ -60,4 +99,38 @@ body, html {
 body::-webkit-scrollbar-track,
 body::-webkit-scrollbar-thumb {
   display: none !important;
+}
+
+/* 加载动画样式 */
+.loading-skeleton {
+  background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 图片加载动画 */
+.image-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  animation: imageLoad 1.5s infinite;
+}
+
+@keyframes imageLoad {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
